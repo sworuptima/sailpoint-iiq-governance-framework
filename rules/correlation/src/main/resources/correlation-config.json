@@ -1,0 +1,18 @@
+{
+  "weightedCorrelation": {
+    "attributes": {
+      "employeeId": 100,
+      "email": 80,
+      "lastname": 30,
+      "firstname": 20
+    },
+    "matchThreshold": 80,
+    "caseSensitive": false
+  },
+  "fuzzyMatch": {
+    "maxEditDistance": 2,
+    "minimumScore": 0.75,
+    "attributes": ["firstname", "lastname", "email"],
+    "exactMatchAttributes": ["employeeId"]
+  }
+}

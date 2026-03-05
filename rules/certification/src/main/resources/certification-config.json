@@ -1,0 +1,22 @@
+{
+  "serviceAccountExclusion": {
+    "serviceAccountPatterns": ["svc_*", "SVC-*", "system_*", "admin_*"],
+    "serviceAccountAttribute": "identityType",
+    "serviceAccountValues": ["service", "system", "rpa"],
+    "excludeInactive": true,
+    "excludeDisabledAccounts": true,
+    "auditExclusions": true
+  },
+  "riskBasedScoping": {
+    "riskAttribute": "riskScore",
+    "highRiskThreshold": 70,
+    "mediumRiskThreshold": 40,
+    "includeRiskLevels": ["high", "critical"],
+    "highRiskRoles": [
+      "Domain Admin", "Database Admin", "Payment Approval",
+      "Security Admin", "Root Access", "Financial Systems Admin"
+    ],
+    "alwaysIncludeAttributes": ["privilegedAccess"],
+    "alwaysIncludeValue": "true"
+  }
+}

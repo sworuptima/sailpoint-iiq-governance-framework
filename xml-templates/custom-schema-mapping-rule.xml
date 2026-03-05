@@ -1,0 +1,77 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Rule PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Rule language="beanshell" name="Toolkit-CustomSchemaMapping" type="BuildMap">
+  <Description>
+    Maps non-standard source system attributes into the normalized IIQ schema.
+    Each application can have its own attribute name mappings configured in the
+    schemaMappings map below. Unmapped attributes pass through unchanged.
+
+    Trigger: Fires during aggregation when building the resource object map.
+    Variables in scope: context (SailPointContext), map (Map of account attributes),
+                        application (Application), schema (Schema).
+  </Description>
+  <Source>
+    <![CDATA[
+    import sailpoint.object.*;
+    import java.util.*;
+
+    String ruleName = "CustomSchemaMapping";
+
+    // --- Configuration: Application-Specific Schema Mappings ---
+    Map schemaMappings = new HashMap();
+
+    Map adMap = new HashMap();
+    adMap.put("sAMAccountName", "accountName");
+    adMap.put("givenName", "firstname");
+    adMap.put("sn", "lastname");
+    adMap.put("mail", "email");
+    adMap.put("department", "department");
+    adMap.put("title", "title");
+    adMap.put("memberOf", "groups");
+    schemaMappings.put("Active Directory", adMap);
+
+    Map ldapMap = new HashMap();
+    ldapMap.put("uid", "accountName");
+    ldapMap.put("cn", "displayName");
+    ldapMap.put("givenName", "firstname");
+    ldapMap.put("sn", "lastname");
+    ldapMap.put("mail", "email");
+    schemaMappings.put("LDAP", ldapMap);
+
+    Map hrMap = new HashMap();
+    hrMap.put("EMPLOYEE_ID", "employeeId");
+    hrMap.put("FIRST_NAME", "firstname");
+    hrMap.put("LAST_NAME", "lastname");
+    hrMap.put("EMAIL_ADDRESS", "email");
+    hrMap.put("DEPT_CODE", "department");
+    schemaMappings.put("HR System", hrMap);
+
+    // --- Rule Logic ---
+    String appName = application.getName();
+    log.info("[" + ruleName + "] Processing account from: " + appName);
+
+    Map mapping = (Map) schemaMappings.get(appName);
+    if (mapping == null) {
+        log.debug("[" + ruleName + "] No mapping for " + appName + ", passing through");
+        return map;
+    }
+
+    Map result = new HashMap();
+    Iterator entries = map.entrySet().iterator();
+    while (entries.hasNext()) {
+        Map.Entry entry = (Map.Entry) entries.next();
+        String sourceAttr = (String) entry.getKey();
+        String targetAttr = (String) mapping.get(sourceAttr);
+
+        if (targetAttr != null) {
+            result.put(targetAttr, entry.getValue());
+        } else {
+            result.put(sourceAttr, entry.getValue());
+        }
+    }
+
+    log.info("[" + ruleName + "] Mapped " + result.size() + " attributes for " + appName);
+    return result;
+    ]]>
+  </Source>
+</Rule>

@@ -1,0 +1,226 @@
+## Organizational Units
+
+dn: ou=People,dc=toolkit,dc=local
+objectClass: organizationalUnit
+ou: People
+
+dn: ou=Groups,dc=toolkit,dc=local
+objectClass: organizationalUnit
+ou: Groups
+
+## People - Engineering
+
+dn: uid=jdoe,ou=People,dc=toolkit,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: jdoe
+cn: John Doe
+sn: Doe
+givenName: John
+mail: jdoe@toolkit.local
+title: Senior Developer
+departmentNumber: Engineering
+employeeNumber: 4501
+manager: uid=mchen,ou=People,dc=toolkit,dc=local
+userPassword: password
+
+dn: uid=agarcia,ou=People,dc=toolkit,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: agarcia
+cn: Ana Garcia
+sn: Garcia
+givenName: Ana
+mail: agarcia@toolkit.local
+title: Developer
+departmentNumber: Engineering
+employeeNumber: 4502
+manager: uid=mchen,ou=People,dc=toolkit,dc=local
+userPassword: password
+
+dn: uid=mchen,ou=People,dc=toolkit,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: mchen
+cn: Michael Chen
+sn: Chen
+givenName: Michael
+mail: mchen@toolkit.local
+title: Manager
+departmentNumber: Engineering
+employeeNumber: 4503
+userPassword: password
+
+## People - Sales
+
+dn: uid=sthompson,ou=People,dc=toolkit,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: sthompson
+cn: Sarah Thompson
+sn: Thompson
+givenName: Sarah
+mail: sthompson@toolkit.local
+title: Account Executive
+departmentNumber: Sales
+employeeNumber: 4510
+manager: uid=rpatel,ou=People,dc=toolkit,dc=local
+userPassword: password
+
+dn: uid=rpatel,ou=People,dc=toolkit,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: rpatel
+cn: Raj Patel
+sn: Patel
+givenName: Raj
+mail: rpatel@toolkit.local
+title: Manager
+departmentNumber: Sales
+employeeNumber: 4511
+userPassword: password
+
+## People - Finance
+
+dn: uid=lwilson,ou=People,dc=toolkit,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: lwilson
+cn: Lisa Wilson
+sn: Wilson
+givenName: Lisa
+mail: lwilson@toolkit.local
+title: Financial Analyst
+departmentNumber: Finance
+employeeNumber: 4520
+manager: uid=klee,ou=People,dc=toolkit,dc=local
+userPassword: password
+
+dn: uid=klee,ou=People,dc=toolkit,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: klee
+cn: Kevin Lee
+sn: Lee
+givenName: Kevin
+mail: klee@toolkit.local
+title: Director
+departmentNumber: Finance
+employeeNumber: 4521
+userPassword: password
+
+## People - Human Resources
+
+dn: uid=jmartinez,ou=People,dc=toolkit,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: jmartinez
+cn: Julia Martinez
+sn: Martinez
+givenName: Julia
+mail: jmartinez@toolkit.local
+title: HR Specialist
+departmentNumber: Human Resources
+employeeNumber: 4530
+manager: uid=dkim,ou=People,dc=toolkit,dc=local
+userPassword: password
+
+dn: uid=dkim,ou=People,dc=toolkit,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: dkim
+cn: David Kim
+sn: Kim
+givenName: David
+mail: dkim@toolkit.local
+title: VP
+departmentNumber: Human Resources
+employeeNumber: 4531
+userPassword: password
+
+## People - New Joiner (for scenario testing)
+
+dn: uid=enewman,ou=People,dc=toolkit,dc=local
+objectClass: inetOrgPerson
+objectClass: organizationalPerson
+objectClass: person
+uid: enewman
+cn: Emily Newman
+sn: Newman
+givenName: Emily
+mail: enewman@toolkit.local
+title: Developer
+departmentNumber: Engineering
+employeeNumber: 4540
+manager: uid=mchen,ou=People,dc=toolkit,dc=local
+userPassword: password
+
+## Groups - Matching birthright roles
+
+dn: cn=Base Access,ou=Groups,dc=toolkit,dc=local
+objectClass: groupOfNames
+cn: Base Access
+member: uid=jdoe,ou=People,dc=toolkit,dc=local
+member: uid=agarcia,ou=People,dc=toolkit,dc=local
+member: uid=mchen,ou=People,dc=toolkit,dc=local
+member: uid=sthompson,ou=People,dc=toolkit,dc=local
+member: uid=rpatel,ou=People,dc=toolkit,dc=local
+member: uid=lwilson,ou=People,dc=toolkit,dc=local
+member: uid=klee,ou=People,dc=toolkit,dc=local
+member: uid=jmartinez,ou=People,dc=toolkit,dc=local
+member: uid=dkim,ou=People,dc=toolkit,dc=local
+
+dn: cn=Engineering Tools,ou=Groups,dc=toolkit,dc=local
+objectClass: groupOfNames
+cn: Engineering Tools
+member: uid=jdoe,ou=People,dc=toolkit,dc=local
+member: uid=agarcia,ou=People,dc=toolkit,dc=local
+member: uid=mchen,ou=People,dc=toolkit,dc=local
+
+dn: cn=GitHub Access,ou=Groups,dc=toolkit,dc=local
+objectClass: groupOfNames
+cn: GitHub Access
+member: uid=jdoe,ou=People,dc=toolkit,dc=local
+member: uid=agarcia,ou=People,dc=toolkit,dc=local
+member: uid=mchen,ou=People,dc=toolkit,dc=local
+
+dn: cn=CRM Access,ou=Groups,dc=toolkit,dc=local
+objectClass: groupOfNames
+cn: CRM Access
+member: uid=sthompson,ou=People,dc=toolkit,dc=local
+member: uid=rpatel,ou=People,dc=toolkit,dc=local
+
+dn: cn=Sales Tools,ou=Groups,dc=toolkit,dc=local
+objectClass: groupOfNames
+cn: Sales Tools
+member: uid=sthompson,ou=People,dc=toolkit,dc=local
+member: uid=rpatel,ou=People,dc=toolkit,dc=local
+
+dn: cn=Finance Systems,ou=Groups,dc=toolkit,dc=local
+objectClass: groupOfNames
+cn: Finance Systems
+member: uid=lwilson,ou=People,dc=toolkit,dc=local
+member: uid=klee,ou=People,dc=toolkit,dc=local
+
+dn: cn=HR Systems,ou=Groups,dc=toolkit,dc=local
+objectClass: groupOfNames
+cn: HR Systems
+member: uid=jmartinez,ou=People,dc=toolkit,dc=local
+member: uid=dkim,ou=People,dc=toolkit,dc=local
+
+dn: cn=Manager Dashboard,ou=Groups,dc=toolkit,dc=local
+objectClass: groupOfNames
+cn: Manager Dashboard
+member: uid=mchen,ou=People,dc=toolkit,dc=local
+member: uid=rpatel,ou=People,dc=toolkit,dc=local
+member: uid=klee,ou=People,dc=toolkit,dc=local
+member: uid=dkim,ou=People,dc=toolkit,dc=local

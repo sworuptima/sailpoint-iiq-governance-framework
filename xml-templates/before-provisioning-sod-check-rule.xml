@@ -1,0 +1,93 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Rule PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Rule language="beanshell" name="Toolkit-BeforeProvisioningSoDCheck" type="BeforeProvisioning">
+  <Description>
+    Validates Separation of Duties compliance before provisioning executes.
+    Checks the combined set of current and requested roles against a conflict
+    matrix and flags or blocks violations.
+
+    Trigger: Fires before a provisioning plan is executed.
+    Variables in scope: context (SailPointContext), plan (ProvisioningPlan),
+                        identity (Identity).
+  </Description>
+  <Source>
+    <![CDATA[
+    import sailpoint.object.*;
+    import java.util.*;
+
+    String ruleName = "BeforeProvisioningSoDCheck";
+
+    // --- Configuration: Conflict Matrix ---
+    Map conflictMatrix = new HashMap();
+    conflictMatrix.put("Accounts Payable", Arrays.asList(new String[]{"Accounts Receivable", "Payment Approval"}));
+    conflictMatrix.put("Payment Approval", Arrays.asList(new String[]{"Accounts Payable", "Vendor Management"}));
+    conflictMatrix.put("User Administration", Arrays.asList(new String[]{"Security Audit"}));
+    conflictMatrix.put("Database Admin", Arrays.asList(new String[]{"Application Developer"}));
+
+    boolean blockOnViolation = false;
+    List exemptRoles = Arrays.asList(new String[]{"Emergency Access"});
+
+    // --- Rule Logic ---
+    log.info("[" + ruleName + "] Checking SoD for: " + identity.getName());
+
+    // Collect current roles
+    Set currentRoles = new HashSet();
+    List bundles = identity.getBundles();
+    if (bundles != null) {
+        Iterator bundleIter = bundles.iterator();
+        while (bundleIter.hasNext()) {
+            Bundle b = (Bundle) bundleIter.next();
+            currentRoles.add(b.getName());
+        }
+    }
+
+    // Collect roles being added
+    Set addedRoles = new HashSet();
+    List accountRequests = plan.getAccountRequests();
+    if (accountRequests != null) {
+        Iterator arIter = accountRequests.iterator();
+        while (arIter.hasNext()) {
+            ProvisioningPlan.AccountRequest ar = (ProvisioningPlan.AccountRequest) arIter.next();
+            List attrRequests = ar.getAttributeRequests();
+            if (attrRequests != null) {
+                Iterator attrIter = attrRequests.iterator();
+                while (attrIter.hasNext()) {
+                    ProvisioningPlan.AttributeRequest attr = (ProvisioningPlan.AttributeRequest) attrIter.next();
+                    if ("assignedRoles".equals(attr.getName()) && ProvisioningPlan.Operation.Add.equals(attr.getOperation())) {
+                        addedRoles.add(attr.getValue().toString());
+                    }
+                }
+            }
+        }
+    }
+
+    // Combined role set
+    Set allRoles = new HashSet(currentRoles);
+    allRoles.addAll(addedRoles);
+    allRoles.removeAll(exemptRoles);
+
+    // Check conflicts
+    List violations = new ArrayList();
+    List roleList = new ArrayList(allRoles);
+    for (int i = 0; i < roleList.size(); i++) {
+        String roleA = (String) roleList.get(i);
+        List conflicts = (List) conflictMatrix.get(roleA);
+        if (conflicts == null) continue;
+
+        for (int j = i + 1; j < roleList.size(); j++) {
+            String roleB = (String) roleList.get(j);
+            if (conflicts.contains(roleB)) {
+                violations.add(roleA + " <-> " + roleB);
+                log.warn("[" + ruleName + "] SoD violation: " + roleA + " conflicts with " + roleB);
+            }
+        }
+    }
+
+    if (!violations.isEmpty() && blockOnViolation) {
+        throw new sailpoint.tools.GeneralException("SoD violation detected: " + violations.toString());
+    }
+
+    log.info("[" + ruleName + "] Completed: " + violations.size() + " violations found");
+    ]]>
+  </Source>
+</Rule>

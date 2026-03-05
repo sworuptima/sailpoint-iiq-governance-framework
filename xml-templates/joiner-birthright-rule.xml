@@ -1,0 +1,108 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Rule PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Rule language="beanshell" name="Toolkit-JoinerBirthrightAccess" type="Workflow">
+  <Description>
+    Assigns birthright roles to newly detected identities based on department
+    and title attributes. Role mappings are configuration-driven — update the
+    maps below to match your organization's access model.
+
+    Trigger: Fire on identity creation or when the 'inactive' flag changes to false.
+    Variables in scope: context (SailPointContext), identity (Identity),
+                        previousIdentity (Identity), newIdentity (Identity).
+  </Description>
+  <Source>
+    <![CDATA[
+    import sailpoint.object.*;
+    import sailpoint.api.SailPointContext;
+    import sailpoint.tools.Util;
+    import java.util.*;
+
+    String ruleName = "JoinerBirthrightAccess";
+
+    // --- Configuration: Department to Role Mappings ---
+    Map departmentRoleMappings = new HashMap();
+    departmentRoleMappings.put("Engineering", Arrays.asList(new String[]{"Engineering Tools", "GitHub Access", "CI/CD Pipeline"}));
+    departmentRoleMappings.put("Sales", Arrays.asList(new String[]{"CRM Access", "Sales Tools", "Lead Database"}));
+    departmentRoleMappings.put("Finance", Arrays.asList(new String[]{"Finance Systems", "Reporting Tools", "Budget Portal"}));
+    departmentRoleMappings.put("Human Resources", Arrays.asList(new String[]{"HR Systems", "Employee Portal Admin", "Benefits Platform"}));
+    departmentRoleMappings.put("Marketing", Arrays.asList(new String[]{"Marketing Platform", "Analytics Dashboard", "Content Management"}));
+    departmentRoleMappings.put("IT", Arrays.asList(new String[]{"IT Service Desk", "Infrastructure Access", "Monitoring Tools"}));
+
+    // --- Configuration: Title to Role Mappings ---
+    Map titleRoleMappings = new HashMap();
+    titleRoleMappings.put("Manager", Arrays.asList(new String[]{"Manager Dashboard", "Approval Authority"}));
+    titleRoleMappings.put("Senior Manager", Arrays.asList(new String[]{"Manager Dashboard", "Approval Authority", "Budget Access"}));
+    titleRoleMappings.put("Director", Arrays.asList(new String[]{"Manager Dashboard", "Approval Authority", "Budget Access", "Executive Reports"}));
+    titleRoleMappings.put("VP", Arrays.asList(new String[]{"Manager Dashboard", "Approval Authority", "Budget Access", "Executive Reports", "Board Materials"}));
+
+    // --- Configuration: Global Birthright Roles ---
+    List globalRoles = Arrays.asList(new String[]{"Base Access", "Email", "Company Intranet"});
+
+    // --- Rule Logic ---
+    log.info("[" + ruleName + "] Processing identity: " + identity.getName());
+
+    Set rolesToAssign = new HashSet();
+
+    // Add global birthright roles
+    rolesToAssign.addAll(globalRoles);
+
+    // Add department-based roles
+    String department = identity.getStringAttribute("department");
+    if (department != null && departmentRoleMappings.containsKey(department)) {
+        List deptRoles = (List) departmentRoleMappings.get(department);
+        rolesToAssign.addAll(deptRoles);
+        log.debug("[" + ruleName + "] Department '" + department + "' mapped to " + deptRoles.size() + " roles");
+    }
+
+    // Add title-based roles
+    String title = identity.getStringAttribute("title");
+    if (title != null && titleRoleMappings.containsKey(title)) {
+        List titleRoles = (List) titleRoleMappings.get(title);
+        rolesToAssign.addAll(titleRoles);
+        log.debug("[" + ruleName + "] Title '" + title + "' mapped to " + titleRoles.size() + " roles");
+    }
+
+    // Filter out roles already assigned
+    List currentBundles = identity.getBundles();
+    Set currentRoleNames = new HashSet();
+    if (currentBundles != null) {
+        Iterator bundleIter = currentBundles.iterator();
+        while (bundleIter.hasNext()) {
+            Bundle b = (Bundle) bundleIter.next();
+            currentRoleNames.add(b.getName());
+        }
+    }
+
+    rolesToAssign.removeAll(currentRoleNames);
+
+    // Build provisioning plan
+    if (!rolesToAssign.isEmpty()) {
+        ProvisioningPlan plan = new ProvisioningPlan();
+        plan.setIdentity(identity);
+
+        ProvisioningPlan.AccountRequest acctReq = new ProvisioningPlan.AccountRequest();
+        acctReq.setApplication("IIQ");
+        acctReq.setNativeIdentity(identity.getName());
+        acctReq.setOperation(ProvisioningPlan.AccountRequest.Operation.Modify);
+
+        Iterator roleIter = rolesToAssign.iterator();
+        while (roleIter.hasNext()) {
+            String roleName = (String) roleIter.next();
+            ProvisioningPlan.AttributeRequest attrReq = new ProvisioningPlan.AttributeRequest();
+            attrReq.setName("assignedRoles");
+            attrReq.setOperation(ProvisioningPlan.Operation.Add);
+            attrReq.setValue(roleName);
+            acctReq.add(attrReq);
+            log.info("[" + ruleName + "] Assigning role: " + roleName + " to " + identity.getName());
+        }
+
+        plan.add(acctReq);
+        log.info("[" + ruleName + "] Completed: " + rolesToAssign.size() + " roles assigned to " + identity.getName());
+        return plan;
+    }
+
+    log.info("[" + ruleName + "] No new roles to assign for " + identity.getName());
+    return null;
+    ]]>
+  </Source>
+</Rule>

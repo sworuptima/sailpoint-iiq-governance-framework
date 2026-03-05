@@ -1,0 +1,162 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Rule PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Rule language="beanshell" name="Toolkit-MoverAccessRebalance" type="Workflow">
+  <Description>
+    Detects department changes and rebalances role assignments. Removes roles
+    specific to the old department, adds roles for the new department, and
+    flags the identity for certification when sensitive roles are affected.
+
+    Trigger: Fire when the 'department' attribute changes on an identity.
+    Variables in scope: context (SailPointContext), identity (Identity),
+                        previousIdentity (Identity), newIdentity (Identity).
+  </Description>
+  <Source>
+    <![CDATA[
+    import sailpoint.object.*;
+    import sailpoint.api.SailPointContext;
+    import sailpoint.tools.Util;
+    import java.util.*;
+
+    String ruleName = "MoverAccessRebalance";
+
+    // --- Configuration: Department to Role Mappings ---
+    Map departmentRoleMappings = new HashMap();
+    departmentRoleMappings.put("Engineering", Arrays.asList(new String[]{"Engineering Tools", "GitHub Access", "CI/CD Pipeline"}));
+    departmentRoleMappings.put("Sales", Arrays.asList(new String[]{"CRM Access", "Sales Tools", "Lead Database"}));
+    departmentRoleMappings.put("Finance", Arrays.asList(new String[]{"Finance Systems", "Reporting Tools", "Budget Portal"}));
+    departmentRoleMappings.put("Human Resources", Arrays.asList(new String[]{"HR Systems", "Employee Portal Admin", "Benefits Platform"}));
+    departmentRoleMappings.put("Marketing", Arrays.asList(new String[]{"Marketing Platform", "Analytics Dashboard", "Content Management"}));
+    departmentRoleMappings.put("IT", Arrays.asList(new String[]{"IT Service Desk", "Infrastructure Access", "Monitoring Tools"}));
+
+    // --- Configuration: Sensitive Roles ---
+    List sensitiveRoles = Arrays.asList(new String[]{"Finance Systems", "HR Systems", "Budget Access", "Board Materials", "Infrastructure Access"});
+
+    // --- Configuration: Global Roles (never removed) ---
+    List globalRoles = Arrays.asList(new String[]{"Base Access", "Email", "Company Intranet"});
+
+    boolean alwaysCertify = true;
+
+    // --- Detect Department Change ---
+    String previousDepartment = null;
+    String newDepartment = null;
+
+    if (previousIdentity != null) {
+        previousDepartment = previousIdentity.getStringAttribute("department");
+    }
+    if (newIdentity != null) {
+        newDepartment = newIdentity.getStringAttribute("department");
+    }
+
+    if (Util.nullSafeEq(previousDepartment, newDepartment)) {
+        log.debug("[" + ruleName + "] No department change for " + identity.getName());
+        return null;
+    }
+
+    log.info("[" + ruleName + "] Department change detected for " + identity.getName()
+             + ": " + previousDepartment + " -> " + newDepartment);
+
+    // --- Compute Role Differences ---
+    Set oldRoles = new HashSet();
+    if (previousDepartment != null && departmentRoleMappings.containsKey(previousDepartment)) {
+        oldRoles.addAll((List) departmentRoleMappings.get(previousDepartment));
+    }
+
+    Set newRoles = new HashSet();
+    if (newDepartment != null && departmentRoleMappings.containsKey(newDepartment)) {
+        newRoles.addAll((List) departmentRoleMappings.get(newDepartment));
+    }
+
+    // Roles to remove: in old set, not in new set, not global
+    Set toRemove = new HashSet(oldRoles);
+    toRemove.removeAll(newRoles);
+    toRemove.removeAll(globalRoles);
+
+    // Roles to add: in new set, not already assigned
+    Set currentRoleNames = new HashSet();
+    List currentBundles = identity.getBundles();
+    if (currentBundles != null) {
+        Iterator bundleIter = currentBundles.iterator();
+        while (bundleIter.hasNext()) {
+            Bundle b = (Bundle) bundleIter.next();
+            currentRoleNames.add(b.getName());
+        }
+    }
+
+    Set toAdd = new HashSet(newRoles);
+    toAdd.removeAll(currentRoleNames);
+
+    // Only remove roles the identity actually has
+    Set actualRemovals = new HashSet();
+    Iterator removeIter = toRemove.iterator();
+    while (removeIter.hasNext()) {
+        String role = (String) removeIter.next();
+        if (currentRoleNames.contains(role)) {
+            actualRemovals.add(role);
+        }
+    }
+
+    // --- Build Provisioning Plan ---
+    if (actualRemovals.isEmpty() && toAdd.isEmpty()) {
+        log.info("[" + ruleName + "] No role changes needed for " + identity.getName());
+        return null;
+    }
+
+    ProvisioningPlan plan = new ProvisioningPlan();
+    plan.setIdentity(identity);
+
+    ProvisioningPlan.AccountRequest acctReq = new ProvisioningPlan.AccountRequest();
+    acctReq.setApplication("IIQ");
+    acctReq.setNativeIdentity(identity.getName());
+    acctReq.setOperation(ProvisioningPlan.AccountRequest.Operation.Modify);
+
+    Iterator removalIter = actualRemovals.iterator();
+    while (removalIter.hasNext()) {
+        String roleName = (String) removalIter.next();
+        ProvisioningPlan.AttributeRequest attrReq = new ProvisioningPlan.AttributeRequest();
+        attrReq.setName("assignedRoles");
+        attrReq.setOperation(ProvisioningPlan.Operation.Remove);
+        attrReq.setValue(roleName);
+        acctReq.add(attrReq);
+        log.info("[" + ruleName + "] Removing role: " + roleName + " from " + identity.getName());
+    }
+
+    Iterator addIter = toAdd.iterator();
+    while (addIter.hasNext()) {
+        String roleName = (String) addIter.next();
+        ProvisioningPlan.AttributeRequest attrReq = new ProvisioningPlan.AttributeRequest();
+        attrReq.setName("assignedRoles");
+        attrReq.setOperation(ProvisioningPlan.Operation.Add);
+        attrReq.setValue(roleName);
+        acctReq.add(attrReq);
+        log.info("[" + ruleName + "] Adding role: " + roleName + " to " + identity.getName());
+    }
+
+    plan.add(acctReq);
+
+    // --- Certification Check ---
+    boolean certRequired = alwaysCertify;
+    if (!certRequired) {
+        Iterator sensitiveIter = actualRemovals.iterator();
+        while (sensitiveIter.hasNext()) {
+            String role = (String) sensitiveIter.next();
+            if (sensitiveRoles.contains(role)) {
+                certRequired = true;
+                break;
+            }
+        }
+    }
+
+    if (certRequired) {
+        log.info("[" + ruleName + "] Flagging " + identity.getName() + " for certification review");
+        identity.setAttribute("certificationRequired", "true");
+        identity.setAttribute("certificationReason",
+            "Department change: " + previousDepartment + " -> " + newDepartment);
+        context.saveObject(identity);
+    }
+
+    log.info("[" + ruleName + "] Completed: +" + toAdd.size() + " roles, -" + actualRemovals.size()
+             + " roles for " + identity.getName());
+    return plan;
+    ]]>
+  </Source>
+</Rule>

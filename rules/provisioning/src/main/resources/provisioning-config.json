@@ -1,0 +1,30 @@
+{
+  "groupAssignment": {
+    "departmentGroupMappings": {
+      "Engineering": ["cn=Engineering,ou=Groups,dc=company,dc=com", "cn=VPN-Engineering,ou=Groups,dc=company,dc=com"],
+      "Sales": ["cn=Sales,ou=Groups,dc=company,dc=com", "cn=CRM-Users,ou=Groups,dc=company,dc=com"],
+      "Finance": ["cn=Finance,ou=Groups,dc=company,dc=com", "cn=ERP-Users,ou=Groups,dc=company,dc=com"],
+      "Human Resources": ["cn=HR,ou=Groups,dc=company,dc=com", "cn=HR-Portal,ou=Groups,dc=company,dc=com"],
+      "IT": ["cn=IT,ou=Groups,dc=company,dc=com", "cn=ServiceDesk,ou=Groups,dc=company,dc=com"]
+    },
+    "locationGroupMappings": {
+      "New York": ["cn=NYC-Office,ou=Groups,dc=company,dc=com"],
+      "San Francisco": ["cn=SFO-Office,ou=Groups,dc=company,dc=com"],
+      "London": ["cn=LON-Office,ou=Groups,dc=company,dc=com"]
+    },
+    "globalGroups": ["cn=All-Employees,ou=Groups,dc=company,dc=com"],
+    "targetApplication": "Active Directory"
+  },
+  "sodCheck": {
+    "conflictMatrix": {
+      "Accounts Payable": ["Accounts Receivable", "Payment Approval"],
+      "Payment Approval": ["Accounts Payable", "Vendor Management"],
+      "User Administration": ["Security Audit"],
+      "Database Admin": ["Application Developer"],
+      "Trade Execution": ["Trade Settlement", "Risk Management"]
+    },
+    "blockOnViolation": false,
+    "notifySecurityTeam": true,
+    "exemptRoles": ["Emergency Access"]
+  }
+}

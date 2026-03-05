@@ -1,0 +1,25 @@
+{
+  "sodViolation": {
+    "conflictMatrix": {
+      "Accounts Payable": ["Accounts Receivable", "Payment Approval", "Vendor Management"],
+      "Payment Approval": ["Accounts Payable", "Vendor Management"],
+      "User Administration": ["Security Audit", "Access Certification"],
+      "Database Admin": ["Application Developer", "Code Deployment"],
+      "Trade Execution": ["Trade Settlement", "Risk Management", "Compliance Review"],
+      "HR Admin": ["Payroll Processing", "Benefits Administration"]
+    },
+    "severityLevels": {
+      "critical": [["Accounts Payable", "Payment Approval"], ["Trade Execution", "Trade Settlement"]],
+      "high": [["User Administration", "Security Audit"], ["Database Admin", "Application Developer"]],
+      "medium": [["HR Admin", "Payroll Processing"]]
+    }
+  },
+  "entitlementCreep": {
+    "peerGroupAttribute": "department",
+    "roleCountAttribute": "assignedRoleCount",
+    "creepThresholdMultiplier": 1.5,
+    "minimumPeerGroupSize": 3,
+    "excludeGlobalRoles": true,
+    "globalRoles": ["Base Access", "Email", "Company Intranet"]
+  }
+}

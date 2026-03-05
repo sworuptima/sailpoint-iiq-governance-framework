@@ -1,0 +1,69 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Rule PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Rule language="beanshell" name="Toolkit-ApprovalEscalation" type="Workflow">
+  <Description>
+    Escalates pending approval work items after configurable timeout periods.
+    Implements a tiered escalation chain: manager -> director -> security team.
+    Optionally auto-approves after a maximum wait period.
+
+    Usage: Call from a workflow step that processes pending approvals.
+    Variables in scope: context (SailPointContext), wfcontext (WorkflowContext),
+                        workflow (Workflow).
+  </Description>
+  <Source>
+    <![CDATA[
+    import sailpoint.object.*;
+    import sailpoint.api.*;
+    import java.util.*;
+
+    String ruleName = "ApprovalEscalation";
+
+    // --- Configuration ---
+    int managerEscalationDays = 3;
+    int directorEscalationDays = 5;
+    int securityEscalationDays = 7;
+    int autoApproveDays = 10;
+
+    // --- Rule Logic ---
+    // Expects these variables to be set by the calling workflow step:
+    //   workItemId      - the ID of the pending work item
+    //   currentApprover - the current owner
+    //   daysPending     - how long the item has been pending
+
+    log.info("[" + ruleName + "] Evaluating work item: " + workItemId + ", pending " + daysPending + " days");
+
+    String action = "NO_ACTION";
+    String targetApprover = currentApprover;
+
+    if (daysPending >= autoApproveDays) {
+        action = "AUTO_APPROVE";
+        targetApprover = null;
+        log.info("[" + ruleName + "] Auto-approving " + workItemId + " after " + daysPending + " days");
+    } else if (daysPending >= securityEscalationDays) {
+        action = "ESCALATE";
+        targetApprover = "spadmin"; // Security team identity
+        log.info("[" + ruleName + "] Escalating to security team");
+    } else if (daysPending >= directorEscalationDays) {
+        action = "ESCALATE";
+        Identity approver = context.getObjectByName(Identity.class, currentApprover);
+        if (approver != null && approver.getManager() != null && approver.getManager().getManager() != null) {
+            targetApprover = approver.getManager().getManager().getName();
+        }
+        log.info("[" + ruleName + "] Escalating to director: " + targetApprover);
+    } else if (daysPending >= managerEscalationDays) {
+        action = "ESCALATE";
+        Identity approver = context.getObjectByName(Identity.class, currentApprover);
+        if (approver != null && approver.getManager() != null) {
+            targetApprover = approver.getManager().getName();
+        }
+        log.info("[" + ruleName + "] Escalating to manager: " + targetApprover);
+    }
+
+    Map result = new HashMap();
+    result.put("action", action);
+    result.put("targetApprover", targetApprover);
+    result.put("daysPending", Integer.valueOf(daysPending));
+    return result;
+    ]]>
+  </Source>
+</Rule>

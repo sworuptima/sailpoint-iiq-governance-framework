@@ -1,0 +1,33 @@
+{
+  "approvalEscalation": {
+    "escalationLevels": [
+      {"daysUntilEscalation": 3, "escalateTo": "manager"},
+      {"daysUntilEscalation": 5, "escalateTo": "director"},
+      {"daysUntilEscalation": 7, "escalateTo": "securityTeam"}
+    ],
+    "autoApproveAfterDays": 10,
+    "sendReminders": true,
+    "reminderIntervalDays": 1
+  },
+  "dynamicRouting": {
+    "riskThresholds": {
+      "low": 30,
+      "medium": 60,
+      "high": 80,
+      "critical": 95
+    },
+    "routingRules": {
+      "low": {"approver": "manager", "approvalLevels": 1},
+      "medium": {"approver": "manager", "approvalLevels": 1},
+      "high": {"approver": "director", "approvalLevels": 2},
+      "critical": {"approver": "securityTeam", "approvalLevels": 3}
+    },
+    "applicationSensitivity": {
+      "Financial Systems": "critical",
+      "HR Systems": "high",
+      "Active Directory": "medium",
+      "Email": "low"
+    },
+    "defaultRiskLevel": "medium"
+  }
+}

@@ -1,0 +1,33 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Rule PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Rule language="beanshell" name="Rule-Template" type="IdentityTrigger">
+  <Description>
+    Template rule skeleton. Replace the name, type, description, and source
+    with your implementation. See the SailPoint IdentityIQ documentation for
+    available rule types and the variables available in each rule's scope.
+
+    Common rule types:
+      - IdentityTrigger: Fires on identity change events
+      - IdentityCreation: Fires when a new identity is created
+      - Correlation: Matches accounts to identities during aggregation
+      - BuildMap: Transforms aggregated account data
+      - FieldValue: Computes field values during provisioning
+      - BeforeProvisioning / AfterProvisioning: Pre/post provisioning hooks
+      - CertificationExclusion: Excludes items from certification campaigns
+  </Description>
+  <Source>
+    <![CDATA[
+    import sailpoint.object.*;
+    import sailpoint.api.SailPointContext;
+    import java.util.*;
+
+    // The 'context' variable (SailPointContext) is always available.
+    // The 'identity' variable is available in identity-scoped rules.
+    // Check IIQ docs for other variables available per rule type.
+
+    // Your rule logic here
+
+    return null;
+    ]]>
+  </Source>
+</Rule>

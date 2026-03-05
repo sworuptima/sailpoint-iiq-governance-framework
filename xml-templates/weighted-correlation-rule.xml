@@ -1,0 +1,74 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Rule PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Rule language="beanshell" name="Toolkit-WeightedMultiAttributeCorrelation" type="Correlation">
+  <Description>
+    Correlates accounts to identities using weighted multi-attribute scoring.
+    Compares account attributes against all identities, scoring each match
+    by configurable weights. The highest-scoring identity above the threshold wins.
+
+    Trigger: Fires during aggregation when correlating an account to an identity.
+    Variables in scope: context (SailPointContext), account (ResourceObject),
+                        application (Application), link (Link).
+  </Description>
+  <Source>
+    <![CDATA[
+    import sailpoint.object.*;
+    import sailpoint.api.*;
+    import java.util.*;
+
+    String ruleName = "WeightedMultiAttributeCorrelation";
+
+    // --- Configuration: Attribute Weights ---
+    Map attributeWeights = new HashMap();
+    attributeWeights.put("employeeId", Integer.valueOf(100));
+    attributeWeights.put("email", Integer.valueOf(80));
+    attributeWeights.put("lastname", Integer.valueOf(30));
+    attributeWeights.put("firstname", Integer.valueOf(20));
+
+    int matchThreshold = 80;
+
+    // --- Rule Logic ---
+    log.info("[" + ruleName + "] Correlating account: " + account.getIdentity());
+
+    Identity bestMatch = null;
+    int bestScore = 0;
+
+    Iterator identities = context.search(Identity.class, new QueryOptions());
+    while (identities.hasNext()) {
+        Identity candidate = (Identity) identities.next();
+        int score = 0;
+
+        Iterator weightEntries = attributeWeights.entrySet().iterator();
+        while (weightEntries.hasNext()) {
+            Map.Entry entry = (Map.Entry) weightEntries.next();
+            String attrName = (String) entry.getKey();
+            int weight = ((Integer) entry.getValue()).intValue();
+
+            Object accountVal = account.getAttribute(attrName);
+            Object identityVal = candidate.getAttribute(attrName);
+
+            if (accountVal != null && identityVal != null) {
+                if (accountVal.toString().equalsIgnoreCase(identityVal.toString())) {
+                    score = score + weight;
+                }
+            }
+        }
+
+        if (score > bestScore) {
+            bestScore = score;
+            bestMatch = candidate;
+        }
+    }
+
+    if (bestScore >= matchThreshold && bestMatch != null) {
+        log.info("[" + ruleName + "] Matched to " + bestMatch.getName() + " with score " + bestScore);
+        Map returnMap = new HashMap();
+        returnMap.put("identityName", bestMatch.getName());
+        return returnMap;
+    }
+
+    log.info("[" + ruleName + "] No match found (best score: " + bestScore + ")");
+    return null;
+    ]]>
+  </Source>
+</Rule>

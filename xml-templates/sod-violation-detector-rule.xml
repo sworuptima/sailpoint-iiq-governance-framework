@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<!DOCTYPE Rule PUBLIC "sailpoint.dtd" "sailpoint.dtd">
+<Rule language="beanshell" name="Toolkit-SoDViolationDetector" type="Policy">
+  <Description>
+    Evaluates role combinations against a configurable conflict matrix to detect
+    Separation of Duties violations. Returns a policy violation object for each
+    conflicting role pair found on an identity.
+
+    Trigger: Fires during policy evaluation.
+    Variables in scope: context (SailPointContext), identity (Identity),
+                        policy (Policy).
+  </Description>
+  <Source>
+    <![CDATA[
+    import sailpoint.object.*;
+    import java.util.*;
+
+    String ruleName = "SoDViolationDetector";
+
+    // --- Configuration: Conflict Matrix ---
+    Map conflictMatrix = new HashMap();
+    conflictMatrix.put("Accounts Payable", Arrays.asList(new String[]{"Accounts Receivable", "Payment Approval", "Vendor Management"}));
+    conflictMatrix.put("Payment Approval", Arrays.asList(new String[]{"Accounts Payable", "Vendor Management"}));
+    conflictMatrix.put("User Administration", Arrays.asList(new String[]{"Security Audit", "Access Certification"}));
+    conflictMatrix.put("Database Admin", Arrays.asList(new String[]{"Application Developer", "Code Deployment"}));
+    conflictMatrix.put("Trade Execution", Arrays.asList(new String[]{"Trade Settlement", "Risk Management"}));
+
+    // --- Rule Logic ---
+    log.info("[" + ruleName + "] Checking identity: " + identity.getName());
+
+    Set roles = new HashSet();
+    List bundles = identity.getBundles();
+    if (bundles != null) {
+        Iterator iter = bundles.iterator();
+        while (iter.hasNext()) {
+            Bundle b = (Bundle) iter.next();
+            roles.add(b.getName());
+        }
+    }
+
+    List violations = new ArrayList();
+    Set checkedPairs = new HashSet();
+    List roleList = new ArrayList(roles);
+
+    for (int i = 0; i < roleList.size(); i++) {
+        String roleA = (String) roleList.get(i);
+        List conflicts = (List) conflictMatrix.get(roleA);
+        if (conflicts == null) continue;
+
+        for (int j = i + 1; j < roleList.size(); j++) {
+            String roleB = (String) roleList.get(j);
+            String pairKey = roleA.compareTo(roleB) < 0 ? roleA + "|" + roleB : roleB + "|" + roleA;
+            if (checkedPairs.contains(pairKey)) continue;
+            checkedPairs.add(pairKey);
+
+            if (conflicts.contains(roleB)) {
+                PolicyViolation violation = new PolicyViolation();
+                violation.setIdentity(identity);
+                violation.setPolicy(policy);
+                violation.setDescription("SoD conflict: " + roleA + " and " + roleB);
+                violation.setStatus(PolicyViolation.Status.Open);
+                violations.add(violation);
+                log.warn("[" + ruleName + "] Violation: " + roleA + " <-> " + roleB);
+            }
+        }
+    }
+
+    log.info("[" + ruleName + "] Found " + violations.size() + " violations for " + identity.getName());
+    return violations;
+    ]]>
+  </Source>
+</Rule>

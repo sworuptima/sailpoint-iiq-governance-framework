@@ -1,0 +1,49 @@
+{
+  "schemaMappings": {
+    "Active Directory": {
+      "sAMAccountName": "accountName",
+      "givenName": "firstname",
+      "sn": "lastname",
+      "mail": "email",
+      "department": "department",
+      "title": "title",
+      "memberOf": "groups",
+      "userAccountControl": "accountStatus",
+      "distinguishedName": "dn"
+    },
+    "LDAP": {
+      "uid": "accountName",
+      "cn": "displayName",
+      "givenName": "firstname",
+      "sn": "lastname",
+      "mail": "email",
+      "departmentNumber": "department",
+      "title": "title",
+      "memberOf": "groups"
+    },
+    "HR System": {
+      "EMPLOYEE_ID": "employeeId",
+      "FIRST_NAME": "firstname",
+      "LAST_NAME": "lastname",
+      "EMAIL_ADDRESS": "email",
+      "DEPT_CODE": "department",
+      "JOB_TITLE": "title",
+      "HIRE_DATE": "startDate",
+      "TERM_DATE": "endDate",
+      "STATUS": "employeeStatus"
+    }
+  },
+  "defaultMappings": {
+    "username": "accountName",
+    "first_name": "firstname",
+    "last_name": "lastname",
+    "email": "email"
+  },
+  "groupDelimiter": ";",
+  "nestedGroupConfig": {
+    "maxDepth": 5,
+    "flattenPrefix": "",
+    "includeParentGroups": true,
+    "groupAttribute": "memberOf"
+  }
+}

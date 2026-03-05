@@ -1,0 +1,15 @@
+{
+  "departmentRoleMappings": {
+    "Engineering": ["Engineering Tools", "GitHub Access", "CI/CD Pipeline"],
+    "Sales": ["CRM Access", "Sales Tools", "Lead Database"],
+    "Finance": ["Finance Systems", "Reporting Tools", "Budget Portal"],
+    "Human Resources": ["HR Systems", "Employee Portal Admin", "Benefits Platform"],
+    "Marketing": ["Marketing Platform", "Analytics Dashboard", "Content Management"],
+    "IT": ["IT Service Desk", "Infrastructure Access", "Monitoring Tools"]
+  },
+  "sensitiveRoles": ["Finance Systems", "HR Systems", "Budget Access", "Board Materials", "Infrastructure Access"],
+  "globalRoles": ["Base Access", "Email", "Company Intranet"],
+  "alwaysCertifyOnDepartmentChange": true,
+  "retainGlobalRoles": true,
+  "gracePeriodDays": 7
+}

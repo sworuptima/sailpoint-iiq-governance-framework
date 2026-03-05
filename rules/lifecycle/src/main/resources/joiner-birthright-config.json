@@ -1,0 +1,18 @@
+{
+  "departmentRoleMappings": {
+    "Engineering": ["Engineering Tools", "GitHub Access", "CI/CD Pipeline"],
+    "Sales": ["CRM Access", "Sales Tools", "Lead Database"],
+    "Finance": ["Finance Systems", "Reporting Tools", "Budget Portal"],
+    "Human Resources": ["HR Systems", "Employee Portal Admin", "Benefits Platform"],
+    "Marketing": ["Marketing Platform", "Analytics Dashboard", "Content Management"],
+    "IT": ["IT Service Desk", "Infrastructure Access", "Monitoring Tools"]
+  },
+  "titleRoleMappings": {
+    "Manager": ["Manager Dashboard", "Approval Authority"],
+    "Senior Manager": ["Manager Dashboard", "Approval Authority", "Budget Access"],
+    "Director": ["Manager Dashboard", "Approval Authority", "Budget Access", "Executive Reports"],
+    "VP": ["Manager Dashboard", "Approval Authority", "Budget Access", "Executive Reports", "Board Materials"]
+  },
+  "globalBirthrightRoles": ["Base Access", "Email", "Company Intranet"],
+  "requireManagerForProvisioning": true
+}

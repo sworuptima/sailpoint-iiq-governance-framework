@@ -1,0 +1,40 @@
+version: '3.8'
+
+services:
+  openldap:
+    image: osixia/openldap:1.5.0
+    container_name: toolkit-ldap
+    ports:
+      - "389:389"
+      - "636:636"
+    environment:
+      LDAP_ORGANISATION: "Toolkit Corp"
+      LDAP_DOMAIN: "toolkit.local"
+      LDAP_ADMIN_PASSWORD: "admin"
+      LDAP_BASE_DN: "dc=toolkit,dc=local"
+    volumes:
+      - ./seed-data/init.ldif:/container/service/slapd/assets/config/bootstrap/ldif/custom/init.ldif
+    command: "--copy-service"
+
+  phpldapadmin:
+    image: osixia/phpldapadmin:0.9.0
+    container_name: toolkit-ldap-admin
+    ports:
+      - "6443:443"
+    environment:
+      PHPLDAPADMIN_LDAP_HOSTS: openldap
+      PHPLDAPADMIN_HTTPS: "true"
+    depends_on:
+      - openldap
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: toolkit-postgres
+    ports:
+      - "5432:5432"
+    environment:
+      POSTGRES_DB: iiq_toolkit
+      POSTGRES_USER: toolkit
+      POSTGRES_PASSWORD: toolkit
+    volumes:
+      - ./seed-data/init.sql:/docker-entrypoint-initdb.d/init.sql
